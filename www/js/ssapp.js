@@ -8,11 +8,11 @@ const deg2rad = Math.PI/180.0;
 
 function toggleDiv(divId) {
     var div = document.getElementById(divId);
-    if (div.style.visibility == 'visible') {
-        div.style.visibility = 'hidden';
+    if (div.style.display == 'block') {
+        div.style.display = 'none';
     }
     else {
-        div.style.visibility = 'visible';
+        div.style.display = 'block';
     }
 }
 
