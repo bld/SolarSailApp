@@ -103,7 +103,7 @@ h1 {
 }
 
 
-@media screen and (prefers-color-scheme: dark) {
+/* @media screen and (prefers-color-scheme: dark) { */
     body {
         background-image:linear-gradient(to bottom, #585858 0%, #1B1B1B 51%);
     }
@@ -119,4 +119,4 @@ h1 {
     #controls {
         visibility: hidden;
     }
-}
+/* } */
