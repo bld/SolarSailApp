@@ -242,6 +242,7 @@ function addControl (el) {
     // Angles
     let ang = newrow.insertCell(0);
     let angtd = document.createElement('input');
+    angtd.id = 'angle';
     angtd.type = 'number';
     angtd.name = 'angles[]';
     angtd.min = '-90';
@@ -252,6 +253,7 @@ function addControl (el) {
     // Durations
     let dur = newrow.insertCell(1);
     let durtd = document.createElement('input');
+    durtd.id = 'duration';
     durtd.type = 'number';
     durtd.name = 'durations[]';
     durtd.min = '0';

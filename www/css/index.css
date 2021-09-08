@@ -102,21 +102,32 @@ h1 {
     -webkit-animation:fade 3000ms infinite;
 }
 
+body {
+    background-image:linear-gradient(to bottom, #585858 0%, #1B1B1B 51%);
+}
 
-/* @media screen and (prefers-color-scheme: dark) { */
-    body {
-        background-image:linear-gradient(to bottom, #585858 0%, #1B1B1B 51%);
-    }
-    #popup {
-        text-align: right;
-        padding: 1em;
-        width: 95%;
-        position: absolute;
-        right: 0;
-        top: 0;
-        color: #ffffff;
-    }
-    #controls {
-        display: none;
-    }
-/* } */
+#popup {
+    text-align: right;
+    padding: 1em;
+    width: 95%;
+    position: absolute;
+    right: 0;
+    top: 0;
+    color: #ffffff;
+}
+
+#controls {
+    display: none;
+}
+
+#lightness {
+    width: 5em;
+}
+
+#angle {
+    width: 5em;
+}
+
+#duration {
+    width: 5em;
+}
