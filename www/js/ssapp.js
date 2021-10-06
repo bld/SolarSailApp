@@ -298,9 +298,10 @@ function delControl(el) {
     app.render();
 }
 
-// Create sail trajectory plot, initialize, and plot
+// Create sail trajectory plot, initialize, update trajectory the first time, and plot
 const app = sstraj();
 app.init();
+updateTrajectory(app, document);
 app.render();
 
 // Update render with orbit controls
