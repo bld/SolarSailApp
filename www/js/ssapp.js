@@ -150,6 +150,7 @@ function sstraj() {
     app.scene.add(app.camera);
     // Controls
     app.controls = new OrbitControls(app.camera, app.renderer.domElement);
+    app.controls.enablePan = false;
     // Simulated sunlight
     app.light = new THREE.PointLight(0xffffff, 1, 100);
     app.light.position.set(0, 0, 0);
