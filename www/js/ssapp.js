@@ -63,7 +63,7 @@ function stars(nstars = 10000, r1 = 500, r2 = r1 * 2) {
  * Generate a sun object to render in scene
  * @param  {Number}     r        Radius of sun (in AU)
  * @param  {Number}     segments Number of segments in sphere
- * @return {THEEE.Mesh}          Sun mesh geometry
+ * @return {THREE.Mesh}          Sun mesh geometry
  */
 function sun (r = 0.00465, segments = 32, color = 0xf9ffd9) {
     var g = new THREE.SphereGeometry(0.00465, 32, 32);
@@ -182,6 +182,7 @@ function sstraj() {
         segments: [],
         colors: colormap,
     }
+    readUrl(document);
 
     // Render function
     app.render = function () {
@@ -297,6 +298,30 @@ function delControl(el) {
     updateInputEvents();
     // Re-render after deleting control
     app.render();
+}
+
+/**
+ * Read URL for control parameters
+ */
+function readUrl (doc) {
+    var url = doc.location.search;
+    var params = new URLSearchParams(url);
+    var lightness = Number(params.get('lightness'));
+    var angles = params.getAll('angles[]').map(Number);
+    var durations = params.getAll('durations[]').map(Number);
+    console.log('Params: ', params.toString());
+    console.log('lightness: ', lightness);
+    console.log('angles: ', angles);
+    console.log('durations: ', durations);
+}
+
+/**
+ * Update URL from control parameters
+ */
+function updateUrl () {
+    var url = window.location.search.substring(1);
+    var varUrl = url.split('&');
+    console.log('URL: ', url);
 }
 
 // Create sail trajectory plot, initialize, update trajectory the first time, and plot
