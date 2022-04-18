@@ -233,7 +233,7 @@ function updateTrajectory(app, document) {
     // Add sail geometry segments to scene for rendering
     app.sail.segments.forEach((segment) => app.scene.add(segment));
     // Update camera to fit max trajectory radius
-    app.rcam = 1.1 * (app.rmax / Math.tan((app.fov * (Math.PI / 180)) / 2));
+    app.rcam = 1.5 * (app.rmax / Math.tan((app.fov * (Math.PI / 180)) / 2));
     app.camera.position.set(0, 0, app.rcam);
 }
 
