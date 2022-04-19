@@ -2,8 +2,6 @@ import * as THREE from './three.module.js';
 
 import { ss2d_data, sail2d_ode, rk4, sail_prop } from './prop.js';
 
-import { OrbitControls } from './OrbitControls.js';
-
 const deg2rad = Math.PI/180.0;
 
 function toggleDiv(divId) {
@@ -144,13 +142,11 @@ function sstraj() {
     app.plotDiv = document.getElementById('plot');
     app.plotDiv.appendChild(app.renderer.domElement);
     // Camera
-    app.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    app.camera.position.set(2, -6, 3);
+    app.fov = 75;
+    app.camera = new THREE.PerspectiveCamera(app.fov, window.innerWidth / window.innerHeight, 0.1, 1000);
+    app.camera.position.set(0, 0, 10);
     app.camera.lookAt(app.origin);
     app.scene.add(app.camera);
-    // Controls
-    app.controls = new OrbitControls(app.camera, app.renderer.domElement);
-    app.controls.enablePan = false;
     // Simulated sunlight
     app.light = new THREE.PointLight(0xffffff, 1, 100);
     app.light.position.set(0, 0, 0);
@@ -225,10 +221,21 @@ function updateTrajectory(app, document) {
     document.getElementsByName('durations[]').forEach((durstring) => app.sail.durations.push(durstring.valueAsNumber));
     // Propagate trajectory
     app.sail.trajdata = sail_prop(app.sail['beta'], app.sail['mu'], app.sail['y0'], app.sail['t0'], app.sail['angles'], app.sail['durations']);
-    // Generate sail trajectory geometry
-    app.sail.trajdata.forEach((trajseg, idx) => app.sail.segments.push(drawseg(trajseg, app.sail.colors[idx])));
+    // Generate sail trajectory geometry, find max radius
+    app.rmax = 0;
+    app.sail.trajdata.forEach((trajseg, idx) => {
+        app.sail.segments.push(drawseg(trajseg, app.sail.colors[idx]));
+        let [tt, yt] = trajseg;
+        yt.forEach((y) => {
+            let [r, th] = y;
+            app.rmax = Math.max(app.rmax, r);
+        });
+    });
     // Add sail geometry segments to scene for rendering
     app.sail.segments.forEach((segment) => app.scene.add(segment));
+    // Update camera to fit max trajectory radius
+    app.rcam = 1.5 * (app.rmax / Math.tan((app.fov * (Math.PI / 180)) / 2));
+    app.camera.position.set(0, 0, app.rcam);
 }
 
 /**
@@ -329,9 +336,6 @@ const app = sstraj();
 app.init();
 updateTrajectory(app, document);
 app.render();
-
-// Update render with orbit controls
-app.controls.addEventListener('change', app.render);
 
 // Enable toggling visibility of the controls
 document.getElementById('button').addEventListener('click', function () { toggleDiv('controls'); });
