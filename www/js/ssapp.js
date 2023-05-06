@@ -131,6 +131,8 @@ function drawseg(seg, col) {
 function sstraj() {
     // Dictionary to store app data
     const app = {};
+    // Window
+    app.window = window;
     // Scene
     app.scene = new THREE.Scene();
     // Origin of scene
@@ -179,7 +181,6 @@ function sstraj() {
         colors: colormap,
     }
     readUrl(document);
-
     // Render function
     app.render = function () {
         if (resizeRendererToDisplaySize(app.renderer)) {
@@ -195,6 +196,7 @@ function sstraj() {
         app.camera.updateProjectionMatrix();
         app.renderer.setSize(window.innerWidth, window.innerHeight);
         app.camera.lookAt(app.origin);
+        updateCameraRadius(app, app.camera);
         return app.renderer.render(app.scene, app.camera);
     }
     // Init function
@@ -234,8 +236,7 @@ function updateTrajectory(app, document) {
     // Add sail geometry segments to scene for rendering
     app.sail.segments.forEach((segment) => app.scene.add(segment));
     // Update camera to fit max trajectory radius
-    app.rcam = 1.5 * (app.rmax / Math.tan((app.fov * (Math.PI / 180)) / 2));
-    app.camera.position.set(0, 0, app.rcam);
+    updateCameraRadius(app, app.camera);
 }
 
 /**
@@ -287,6 +288,8 @@ function addControl (el) {
     updateInputEvents();
     // Re-render after adding control
     app.render();
+    // Log stuff
+    console.log('Add control');
 }
 
 /**
@@ -356,4 +359,16 @@ function updateInputEvents() {
     document.getElementsByName('addctrl[]').forEach((button) => button.onclick = addControl);
     // Update deleting trajectory control
     document.getElementsByName('delctrl[]').forEach((button) => button.onclick = delControl);
+}
+
+/**                                                                                                      
+ * Update camera radius based on trajectory radius and window size                                       
+ */
+function updateCameraRadius(app, camera) {
+    var camscale = 1.0;
+    if (app.window.innerWidth < app.window.innerHeight) {
+        camscale = 1/app.camera.aspect;
+    }
+    app.rcam = 1.5 * camscale * (app.rmax / Math.tan((app.fov * (Math.PI / 180)) / 2));
+    app.camera.position.set(0, 0, app.rcam);
 }
