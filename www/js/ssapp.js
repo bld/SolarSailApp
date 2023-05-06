@@ -61,7 +61,7 @@ function stars(nstars = 10000, r1 = 500, r2 = r1 * 2) {
  * Generate a sun object to render in scene
  * @param  {Number}     r        Radius of sun (in AU)
  * @param  {Number}     segments Number of segments in sphere
- * @return {THEEE.Mesh}          Sun mesh geometry
+ * @return {THREE.Mesh}          Sun mesh geometry
  */
 function sun (r = 0.00465, segments = 32, color = 0xf9ffd9) {
     var g = new THREE.SphereGeometry(0.00465, 32, 32);
@@ -131,6 +131,8 @@ function drawseg(seg, col) {
 function sstraj() {
     // Dictionary to store app data
     const app = {};
+    // Window
+    app.window = window;
     // Scene
     app.scene = new THREE.Scene();
     // Origin of scene
@@ -178,7 +180,7 @@ function sstraj() {
         segments: [],
         colors: colormap,
     }
-
+    readUrl(document);
     // Render function
     app.render = function () {
         if (resizeRendererToDisplaySize(app.renderer)) {
@@ -194,6 +196,7 @@ function sstraj() {
         app.camera.updateProjectionMatrix();
         app.renderer.setSize(window.innerWidth, window.innerHeight);
         app.camera.lookAt(app.origin);
+        updateCameraRadius(app, app.camera);
         return app.renderer.render(app.scene, app.camera);
     }
     // Init function
@@ -233,8 +236,7 @@ function updateTrajectory(app, document) {
     // Add sail geometry segments to scene for rendering
     app.sail.segments.forEach((segment) => app.scene.add(segment));
     // Update camera to fit max trajectory radius
-    app.rcam = 1.5 * (app.rmax / Math.tan((app.fov * (Math.PI / 180)) / 2));
-    app.camera.position.set(0, 0, app.rcam);
+    updateCameraRadius(app, app.camera);
 }
 
 /**
@@ -286,6 +288,8 @@ function addControl (el) {
     updateInputEvents();
     // Re-render after adding control
     app.render();
+    // Log stuff
+    console.log('Add control');
 }
 
 /**
@@ -304,6 +308,30 @@ function delControl(el) {
     updateInputEvents();
     // Re-render after deleting control
     app.render();
+}
+
+/**
+ * Read URL for control parameters
+ */
+function readUrl (doc) {
+    var url = doc.location.search;
+    var params = new URLSearchParams(url);
+    var lightness = Number(params.get('lightness'));
+    var angles = params.getAll('angles[]').map(Number);
+    var durations = params.getAll('durations[]').map(Number);
+    console.log('Params: ', params.toString());
+    console.log('lightness: ', lightness);
+    console.log('angles: ', angles);
+    console.log('durations: ', durations);
+}
+
+/**
+ * Update URL from control parameters
+ */
+function updateUrl () {
+    var url = window.location.search.substring(1);
+    var varUrl = url.split('&');
+    console.log('URL: ', url);
 }
 
 // Create sail trajectory plot, initialize, update trajectory the first time, and plot
@@ -331,4 +359,16 @@ function updateInputEvents() {
     document.getElementsByName('addctrl[]').forEach((button) => button.onclick = addControl);
     // Update deleting trajectory control
     document.getElementsByName('delctrl[]').forEach((button) => button.onclick = delControl);
+}
+
+/**                                                                                                      
+ * Update camera radius based on trajectory radius and window size                                       
+ */
+function updateCameraRadius(app, camera) {
+    var camscale = 1.0;
+    if (app.window.innerWidth < app.window.innerHeight) {
+        camscale = 1/app.camera.aspect;
+    }
+    app.rcam = 1.5 * camscale * (app.rmax / Math.tan((app.fov * (Math.PI / 180)) / 2));
+    app.camera.position.set(0, 0, app.rcam);
 }

@@ -1,23 +1,43 @@
 // Module to integrate solar sail trajectory
+// 2D trajectory with polar coordinates
+// 4 states to integrate including radius, angle, radial velocity, and tangential velocity
 
-var ss2d_data = { beta: 0.01,
-		  mu: 1,
-		  sia: 0,
+// Data structure to use for integrating sail trajectory segments
+var ss2d_data = { beta: 0.01, // Sail lightness number (solar:gravitational acceleration)
+		  mu: 1,      // Solar gravitational parameter (mass*G) in AU/TU
+		  sia: 0,     // Sun incidence angle of sail (radians)
 		}
 
 function sail2d_ode (t, y, data) {
-    let r = y[0], theta = y[1], vr = y[2], vt = y[3];
-    let beta = data['beta'], mu = data['mu'], sia = data['sia'];
-    let co = Math.cos(sia), si = Math.sin(sia);
+    // Equations of motion of solar sail in 2D with polar coordinates
+    //
+    // Given time, state (r, theta, v-radial, v-tangential), and
+    // object with problem data, return state derivatives for use by
+    // ODE solver
+    let r = y[0], theta = y[1], vr = y[2], vt = y[3]; // State variables
+    let beta = data['beta'], mu = data['mu'], sia = data['sia']; // Problem data
+    let co = Math.cos(sia), si = Math.sin(sia); // cos/sin of SIA
+    // State derivatives
     return [
-	vr,
-	vt / r,
-	vt**2 / r + mu * (beta * co**2 * Math.abs(co) - 1) / (r**2),
-	mu * beta * co**2 * si / (r**2) - vr * vt / r
+	vr, // Radius
+	vt / r, // Theta
+	vt**2 / r + mu * (beta * co**2 * Math.abs(co) - 1) / (r**2), // v-radial
+	mu * beta * co**2 * si / (r**2) - vr * vt / r // v-tangential
     ];
 }
 
 function rk4 (f, y0, t0, tf, nt, data) {
+    // Runge-Kutta ODE solver of 4th order with fixed stepsize
+    //
+    // Returns time history of ODE solution given:
+    // f: function of ODE to solve
+    // y0: initial state
+    // t0: initial time
+    // tf: final time
+    // nt: number of times to solve at
+    // data: object with data to pass into ODE function
+    //
+    // Returns lists [tt, yy] of times and integrated states
 
     const ny = y0.length;
     
@@ -64,19 +84,38 @@ function rk4 (f, y0, t0, tf, nt, data) {
 }
 
 function sail_prop (beta, mu, y0, t0, angles, durations) {
-    let nt = 100;
-    let nc = Math.max(angles.length, durations.length);
+    // Propagate 2D solar sail trajectory in 2D with polar
+    // coordinates. Separately integrates segments of constant
+    // sun-incidence angle then returns list of time histories (times,
+    // state vectors) for each segment.
+    //
+    // Inputs:
+    // beta: lightness number (ratio of solar:gravitational acceleration)
+    // mu: gravitational parameter of the sun (mass*G)
+    // y0: initial state
+    // t0: initial time
+    // angles: list of constant sun incidence angles
+    // durations: length of time of each constant angles segment
+    //
+    // Returns:
+    // List of [ times, states ] for each constant angle segment
+    
+    let nt = 100; // Number of times to integrate (TBD: scale according to duration)
+    let nc = Math.max(angles.length, durations.length); // Number of segments
     let t0i = t0, y0i = y0; // Initial time and state
     let segs = []; // Store trajectory segments
-    for (var ic = 0; ic < nc; ic += 1) { // Iterate over number of control segments
+    // Iterate over number of control segments
+    for (var ic = 0; ic < nc; ic += 1) {
 	let tfi = t0i + durations[ic]; // Time step size
 	// Integrate current segment
 	let seg = rk4(sail2d_ode, y0i, t0i, tfi, nt, { beta: beta, mu: mu, sia: angles[ic] });
-        segs.push(seg); // Add segment to segments
+        segs.push(seg); // Add segment to list of segments
 	y0i = seg[1][seg[1].length - 1]; // New initial state = previous final state
 	t0i = tfi; // New initial time = previous final time
     }
+    // Return list of trajectory segments
     return segs;
 }
 
+// Functions and data to make available to the web app
 export { ss2d_data, sail2d_ode, rk4, sail_prop };
