@@ -179,6 +179,8 @@ function sstraj() {
         trajdata: [],
         segments: [],
         colors: colormap,
+        // Sail geometry data
+        nodes: [],
     }
     readUrl(document);
     // Render function
@@ -193,10 +195,10 @@ function sstraj() {
     // Window resize function
     app.onWindowResize = function () {
         app.camera.aspect = window.innerWidth / window.innerHeight;
-        app.camera.updateProjectionMatrix();
         app.renderer.setSize(window.innerWidth, window.innerHeight);
         app.camera.lookAt(app.origin);
         updateCameraRadius(app, app.camera);
+        app.camera.updateProjectionMatrix();
         return app.renderer.render(app.scene, app.camera);
     }
     // Init function
@@ -217,6 +219,9 @@ function updateTrajectory(app, document) {
     app.sail.segments = [];
     app.sail.angles = [];
     app.sail.durations = [];
+    // Remove sail geometry
+    app.sail.nodes.forEach((sail) => app.scene.remove(sail));
+    app.sail.nodes = [];
     // Read data from input fields
     app.sail.beta = document.getElementsByName('lightness')[0].valueAsNumber;
     document.getElementsByName('angles[]').forEach((anglestring) => app.sail.angles.push(anglestring.valueAsNumber * deg2rad));
@@ -235,6 +240,19 @@ function updateTrajectory(app, document) {
     });
     // Add sail geometry segments to scene for rendering
     app.sail.segments.forEach((segment) => app.scene.add(segment));
+    // Draw sail at the start of each segment
+    app.sail.trajdata.forEach((seg, idx) => {
+        var r0 = seg[1][0][0];
+        var theta0 = seg[1][0][1];
+        var x0 = r0*Math.cos(theta0);
+        var y0 = r0*Math.sin(theta0);
+        var angle = app.sail.angles[idx];
+        var node = new sail(app.rmax / 20);
+        node.position.set(x0, y0, 0);
+        node.rotation.z = angle + theta0;
+        app.sail.nodes.push(node);
+    });
+    app.sail.nodes.forEach((node) => app.scene.add(node));
     // Update camera to fit max trajectory radius
     updateCameraRadius(app, app.camera);
 }
@@ -361,14 +379,43 @@ function updateInputEvents() {
     document.getElementsByName('delctrl[]').forEach((button) => button.onclick = delControl);
 }
 
-/**                                                                                                      
- * Update camera radius based on trajectory radius and window size                                       
+/**
+ * Update camera radius based on trajectory radius and window size
  */
 function updateCameraRadius(app, camera) {
-    var camscale = 1.0;
+    var camscale = 1;
     if (app.window.innerWidth < app.window.innerHeight) {
         camscale = 1/app.camera.aspect;
     }
-    app.rcam = 1.5 * camscale * (app.rmax / Math.tan((app.fov * (Math.PI / 180)) / 2));
+    app.rcam = 1.1 * camscale * (app.rmax / Math.tan((app.fov * (Math.PI / 180)) / 2));
     app.camera.position.set(0, 0, app.rcam);
+}
+
+/**
+ * Draw a sail with the given width
+ */
+function sail(w) {
+    const g = new THREE.BufferGeometry(); // Geometry
+    const l = w * Math.sqrt(2); // Boom length
+    const vertices = new Float32Array( [
+        0, 0, 0,
+        0, l, 0,
+        0, 0, l,
+        0, -l, 0,
+        0, 0, -l,
+    ]);
+    const indices = [
+        0, 1, 2,
+        0, 2, 3,
+        0, 3, 4,
+        0, 4, 1,
+    ];
+    g.setIndex(indices);
+    g.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+    g.computeVertexNormals();
+    g.computeBoundingSphere();
+    // Material of sail
+    const ms = new THREE.MeshBasicMaterial({ color : 0x444444, side : THREE.DoubleSide });
+    // Sail mesh object
+    return new THREE.Mesh(g, ms);
 }
